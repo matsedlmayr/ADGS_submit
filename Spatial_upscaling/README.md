@@ -36,7 +36,7 @@ This project implements a spatial upscaling workflow to model global leaf nitrog
   License file for the project.
 
 ## Workflow
-Run run_all_spatial.r as a main file for the following workflow to be executed.
+Run `run_all_spatial.R` as a main file for the following workflow to be executed.
 1. **Data preparation**  
    Runs `analysis/01_loaddata.R` to download, clean, and select the dataset.  
 
