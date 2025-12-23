@@ -2,8 +2,14 @@
 # This script sequentially runs the main analysis scripts
 
 # Load helper packages if needed
+library(tidyverse)
+library(ranger)
+library(purrr)
+library(ggplot2)
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
 library(here)
-
 # 1. Load the data
 message("Running 01_loaddata.R...")
 source(here::here("analysis/01_loaddata.R"))
