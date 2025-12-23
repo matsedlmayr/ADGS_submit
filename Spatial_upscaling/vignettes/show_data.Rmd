@@ -1,0 +1,67 @@
+---
+title: "Show data"
+author: "Beni Stocker"
+date: "2023-04-14"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(readr)
+# devtools::install_github("stineb/rbeni")
+library(rbeni)
+# devtools::install_github("valentinitnelav/plotbiomes")
+library(plotbiomes)
+```
+
+## Read data
+
+Data produced by `analysis/02_complement_environment_missing.R`.
+
+```{r}
+df <- read_csv(paste0(here::here(), "/data/leafnp_tian_et_al.csv"))
+```
+
+Define predictors and targets.
+```{r}
+trgts <- c("leafN", "leafP", "LeafNP")
+
+## predictors excluding PHO, and TS (too many missing)
+preds <- c("elv", "mat", "matgs", "tmonthmin", "tmonthmax", "ndaysgs", "mai", "maigs", "map", "pmonthmin", "mapgs", "mavgs", "mav", "alpha", "vcmax25", "jmax25", "gs_accl", "aet", "ai", "cwdx80", "gti", "ndep", "co2", "T_BULK_DENSITY", "AWC_CLASS", "T_CLAY", "T_SILT", "T_SAND", "T_GRAVEL", "T_PH_H2O", "T_TEB", "T_BS", "T_CEC_SOIL", "T_CEC_CLAY", "T_ECE", "T_ESP", "T_CACO3", "T_OC", "ORGC", "TOTN", "CNrt", "ALSA", "PBR", "TP", "TK")
+```
+
+## Explore site locations
+
+Get aggregate to site-level.
+```{r}
+dfs <- df %>%
+
+  ## remove unplausible leafNP data baed on Dis recommendation
+  dplyr::filter(LeafNP < 70) %>%
+
+  mutate(elv_grp = elv) %>%
+  group_by(lon, lat, elv_grp, sitename) %>%
+  summarise(across(all_of(c(preds, trgts)), ~(mean(.x, na.rm = TRUE)))) %>%
+  left_join(df %>%
+              group_by(sitename) %>%
+              summarise(nobs = n()),
+            by = "sitename") %>%
+  ungroup()
+```
+
+Show on map.
+```{r}
+rbeni::plot_map_simpl() +
+  geom_point(data = dfs, aes(x = lon, y = lat), color = "red", size = 0.3)
+```
+
+Show was Whittaker biome plot.
+```{r}
+plotbiomes::whittaker_base_plot() +
+  geom_point(data = dfs, aes(x = mat, y = map/10), alpha = 0.3) +
+  theme_classic()
+ggsave(paste0(here::here(), "/fig/sites_biomes_whittaker.pdf"), width = 8, height = 5)
+ggsave(paste0(here::here(), "/fig/sites_biomes_whittaker.png"), width = 8, height = 5)
+```
+```

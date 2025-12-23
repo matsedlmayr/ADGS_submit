@@ -1,0 +1,46 @@
+# The data
+
+We will use a dataset of leaf nitrogen (N) content, measured in the field. The leaf N content is central for understanding the photosynthesis rates and biogeochemical cycling of N and C in terrestrial ecosystems. A rich body of literature has investigated global patterns of leaf N across the Earth's biomes and the relationships of leaf N to environmental factors. In recent years, leaf N data collected in the field by a large number of individual campaigns, has been collated into homogenised and analysis-ready data compilations. "Small data" has been made (relatively) "big". Thanks to the fact that these data are geolocalised, covariate data from files with global coverage can be extracted and used to complement the observational leaf N data and to model leaf N on the basis of environmental covariates.
+
+Research in the our group ([GECO](https://geco-group.org/), Institute of Geography University of Bern) has generated such analysis-ready leaf N data, complemented with environmental covariates, and made openly accessible on [GitHub](https://github.com/geco-bern/leafnp_data) and Zenodo [@leafnp_data].
+
+Load the data directly from its online source on GitHub.
+```{r}
+library(tidyverse)
+library(skimr)
+
+df <- readr::read_csv("https://raw.githubusercontent.com/geco-bern/leafnp_data/main/data/leafnp_tian_et_al.csv")
+```
+
+We will work with a limited subset of the variables available in the file, and with the data aggregated by sites (identified by their respective longitudes and latitudes):
+
+- `leafN`: leaf nitrogen content, in mass-based concentration units (gN gDM$^{-1}$)
+- `lon`: longitude in decimal degrees east
+- `lat`: latitude in decimal degrees north
+- `elv`: Elevation above sea level (m)
+- `mat`: mean annual temperature (degrees Celsius)
+- `map`: mean annual precipitation (mm yr$^{-1}$)
+- `ndep`: atmospheric nitrogen deposition g m$^{-2}$ yr$^{-1}$
+- `mai`: mean annual daily irradiance $\micro$mol m$^{-2}$ s$^{-1}$
+- `Species`: species name of the plant on which leaf N was measured
+
+```{r}
+common_species <- df |>
+  group_by(Species) |>
+  summarise(count = n()) |>
+  arrange(desc(count)) |>
+  slice(1:50) |>
+  pull(Species)
+
+dfs <- df |>
+  dplyr::select(leafN, lon, lat, elv, mat, map, ndep, mai, Species) |>
+  filter(Species %in% common_species)
+# group_by(lon, lat) |>
+# summarise(across(where(is.numeric), mean))
+
+# quick overview of data
+skimr::skim(dfs)
+
+# show missing data
+visdat::vis_miss(dfs)
+```

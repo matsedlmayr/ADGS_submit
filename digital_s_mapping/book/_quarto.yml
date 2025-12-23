@@ -1,0 +1,54 @@
+project:
+  type: book
+  output-dir: _book
+
+book:
+  title: "AGDS 2: Digital Soil Mapping"
+  subtitle: "Predicting soil properties from spatial data"
+  author: 
+    - name: "Pascal Schneider"
+    - name: "Benjamin Stocker"
+    - name: "Madlene Nussbaum"
+  date: "09/11/2023"
+  page-navigation: true
+  chapters:
+    - index.qmd
+    - 01-introduction.qmd
+    - 02-data_preparation.qmd
+    - 03-model_training.qmd
+    - 04-model_analysis.qmd
+    - 99-exercise.qmd
+    - 99-variables.qmd
+    - references.qmd
+  favicon: "figures/favicon.ico"
+  twitter-card: true
+  sharing: [twitter, facebook]
+  search: true
+  navbar: 
+    logo: "images/logo.png"
+    background: "#3A3A3A"
+    right:
+      - icon: github
+        href: https://github.com/geco-bern/tutorial_digital_soil_mapping
+        aria-label: GitHub
+      - text: "Home"
+        file: index.qmd
+  
+bibliography: references.bib
+csl: global-change-biology.csl
+
+format:
+  html:
+    theme: 
+      light: [cosmo, theme-light.scss]
+      dark: [cosmo, theme-dark.scss]
+    code-fold: show
+    code-copy: true
+    code-summary: "Show/Hide Code"
+    
+editor: visual
+
+execute: 
+  warning: false
+  freeze: auto
+  dir: ../

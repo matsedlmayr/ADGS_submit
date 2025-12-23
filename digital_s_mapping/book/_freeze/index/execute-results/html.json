@@ -1,0 +1,16 @@
+{
+  "hash": "f4d7bf51e4603e69f4a02c304f71dc29",
+  "result": {
+    "markdown": "---\ntitle-block-banner: true\n---\n\n\n# Preface {.unnumbered}\n\nThis online book covers the tutorial on digital soil mapping from the course Applied Geodata Science 2 at the University of Bern. Code and data was provided by [Madlene Nussbaum](https://www.bfh.ch/de/ueber-die-bfh/personen/3ipudkkxwe7z/) and the conversion into an online tutorial was done by [Pascal Schneider](https://www.wsl.ch/de/mitarbeitende/schneidp/).\n\n# System Setup\n\nIf you want to replicate the code of this tutorial, we suggest to either load the latest `renv.lock` file from this tutorial's repository and load it using the {renv} package. Alternatively, the output below could be used to traceback and install the exact package versions that were used in this tutorial.\n\n\n::: {.cell}\n\n```{.r .cell-code}\nsessionInfo()\n```\n\n::: {.cell-output .cell-output-stdout}\n```\nR version 4.5.0 (2025-04-11)\nPlatform: aarch64-apple-darwin20\nRunning under: macOS Sequoia 15.6.1\n\nMatrix products: default\nBLAS:   /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRblas.0.dylib \nLAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1\n\nlocale:\n[1] C/UTF-8/C/C/C/C\n\ntime zone: Europe/Zurich\ntzcode source: internal\n\nattached base packages:\n[1] stats     graphics  grDevices datasets  utils     methods   base     \n\nloaded via a namespace (and not attached):\n [1] htmlwidgets_1.6.4 compiler_4.5.0    fastmap_1.2.0     cli_3.6.5        \n [5] htmltools_0.5.8.1 tools_4.5.0       yaml_2.3.10       rmarkdown_2.29   \n [9] knitr_1.50        jsonlite_2.0.0    xfun_0.53         digest_0.6.37    \n[13] rlang_1.1.6       renv_1.0.0        evaluate_1.0.5   \n```\n:::\n:::\n",
+    "supporting": [
+      "index_files"
+    ],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

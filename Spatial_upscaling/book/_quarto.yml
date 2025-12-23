@@ -1,0 +1,39 @@
+project:
+  type: book
+  output-dir: _book
+
+execute:
+  freeze: auto
+
+book:
+  title: "Spatial upscaling"
+  subtitle: "Exploring the generalisability of global leaf nitrogen models"
+  author: "Benjamin Stocker"
+  date: "2025/11/21"
+  page-navigation: true
+  chapters:
+    - index.qmd
+    - data.qmd
+    - exercise.qmd
+    - references.qmd
+  favicon: "figures/favicon.ico"
+  twitter-card: true
+  search: true
+  repo-url: https://github.com/geco-bern/spatial_upscaling
+  sharing: []
+  navbar:
+    title: " "
+    logo: "images/logo.png"
+    background: "#3A3A3A"
+    search: true
+    right:
+      - text: "Home"
+        file: index.qmd
+
+bibliography: references.bib
+
+format:
+  html:
+    theme: 
+      light: [cosmo, theme-light.scss]
+      dark: [cosmo, theme-dark.scss]

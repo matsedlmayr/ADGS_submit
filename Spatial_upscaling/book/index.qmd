@@ -1,0 +1,13 @@
+---
+title-block-banner: true
+---
+
+# The context {.unnumbered}
+
+Creating maps with large spatial, often global coverage based on a limited set of local measurements has become popular [@ludwig23; @bastin19; @hoogen19; @steidinger19]. Digital soil mapping led the way by introducing the paradigm that (i) maps can be created based on a model that fits relationships between a locally measured variable of interest and a set of covariates, often environmental variables; and that (ii) global maps of these covariates are available and enable predicting with the fitted model to conditions (locations) for which no local measurements are available [@hengl17]. But how reliable are such predictions? And what determines the reliability of predictions to unobserved locations? How can this reliability, the prediction error, be estimated?
+
+With [digital soil mapping introduced in Block 3](https://geco-bern.github.io/tutorial_digital_soil_mapping/) of [Applied Geodata Science 2](https://geco-bern.github.io/agds2_course/), here we probe its fundamental modelling paradigm - spatial upscaling. We learn how we test a (machine learning) model with a view to what it is used for - the prediction task.
+
+This is a block of the M.Sc.-level course [Applied Geodata Science 2](https://geco-bern.github.io/agds2_course/), offered at the Geography Institute of University Bern. This block serves to critically reflect on working with big data and using (black box) models. It does not introduce entirely new methods, but serves to apply methods learned in previous blocks and in [Applied Geodata Science 1](https://geco-bern.github.io/agds/) for exploring and understanding the benefits and limits of (geo-) data science methods. Rather than a tutorial, this block comes in the form of literature study and working with the data yourself.
+
+![](./figures/logo_unibern_squid3.png){width="30%"} ![](./figures/geco_logo_fullname.png){width="30%"}

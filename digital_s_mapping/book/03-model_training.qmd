@@ -1,0 +1,272 @@
+# Train a Random Forest {#sec-modelfit}
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(readr)
+library(ggplot2)
+library(ranger)
+library(here)
+library(knitr)
+library(parallel)
+```
+
+In this chapter, we are going to use the data prepared in @sec-dataprep, train a Random Forest model, and evaluate the variable importance of the different predictors_all used in the model. To recap the basics of the Random Forest algorithm and its implementation and use in R, head over to [Chapter 11 of AGDS book](https://geco-bern.github.io/agds_book/randomforest.html).
+
+## Load data
+
+In the previous Chapter, we created a dataframe that holds information on the soil sampling locations and the covariates that we extracted for these positions. Let's load this datafarme into our environment
+
+```{r}
+df_full <- readRDS(here("data/df_full.rds"))
+
+head(df_full) |>
+  knitr::kable()
+```
+
+## Preparations
+
+Before we can fit the model, we have to specify a few settings. First, we have to specify our target and predictor variables. Then, we have to split our dataset into a training and a testing set. Random Forest models cannot deal with `NA` values, so we have to remove these from our training set. 
+
+In the dataset we work with here, the data splitting into training and testing sets is defined by the column `dataset`. Usually, this is not the case and we split the data ourselves. Have a look at the [section in AGDS Book on data splitting](https://geco-bern.github.io/agds_book/supervised_ml_I.html#data-splitting).
+
+As predictors_all we use all the variables for which we have data with spatial coverage - the basis for spatial upscaling. We extracted these data in @sec-dataprep from geospatial files and the data frame was constructed by `cbind()`, where columns number 14-104 contain the covariates data, extracted from the geospatial files. See @sec-variables for a description of the variables. We use all of them here as predictors_all for the model.
+
+```{r}
+# Specify target: The pH in the top 10cm
+target <- "ph.0.10"
+
+# Specify predictors_all: Remove soil sampling and observational data
+predictors_all <- names(df_full)[14:ncol(df_full)]
+
+cat(
+  "The target is:", target,
+  "\nThe predictors_all are:", paste0(predictors_all[1:8], sep = ", "), "..."
+)
+```
+
+```{r}
+# Split dataset into training and testing sets
+df_train <- df_full |> 
+  filter(dataset == "calibration")
+
+df_test <- df_full |> 
+  filter(dataset == "validation")
+
+# Filter out any NA to avoid error when running a Random Forest
+df_train <- df_train |> 
+  drop_na()
+
+df_test <- df_test |> 
+  drop_na()
+
+# A little bit of verbose output:
+n_tot <- nrow(df_train) + nrow(df_test)
+
+perc_cal <- (nrow(df_train) / n_tot) |> round(2) * 100
+perc_val <- (nrow(df_test) / n_tot) |> round(2) * 100
+
+cat(
+  "For model training, we have a calibration / validation split of: ",
+  perc_cal, "/", perc_val, "%"
+)
+```
+
+Alright, this looks all good. We have our target and predictor variables saved for easy access later on and the 75/25% split of calibration and validation data looks good, too. We can now move on to model fitting.
+
+## Model training
+
+The modelling task is to predict the soil pH in the top 10 cm. Let's start using the default hyperparameters used by `ranger()`.
+
+::: callout-tip
+Have a look at the values of the defaults by entering. `?ranger` in your console and study the function documentation. 
+:::
+
+```{r}
+# ranger() crashes when using tibbles, so we are using the
+# base R notation to enter the data
+rf_basic <- ranger(
+  y = df_train[, target],     # target variable
+  x = df_train[, predictors_all], # Predictor variables
+  seed = 42, # Specify the seed for randomization to reproduce the same model again
+  num.threads = parallel::detectCores() - 1
+) # Use all but one CPU core for quick model training
+
+# Print a summary of fitted model
+print(rf_basic)
+```
+
+::: callout-tip
+## Predicting categories with Random Forests
+
+If our target variable was a categorical and not a continuous variable, we would have to set the argument `probability = TRUE`. The output would then be a probability map from 0-100%.
+:::
+
+Although we only used the pre-defined parameters, we already get a fairly good out-of-bag (OOB) $R^2$ of 0.45 and a MSE of 0.32 pH units. See [here](https://geco-bern.github.io/agds_book/randomforest.html#out-of-bag-prediction) for more background on OOB error estimation with Random Forests.
+
+This is the step at which you may want to reduce the number of predictors_all to avoid collinearity and the risk of overfitting. You may also want to optimize the hyperparameters for improving the model performance and generalisability. Different hyperparameter specifications of the Random Forest model that control the model complexity may be compared. A simple way to do that is to use the {caret} R package which provides machine learning wrapper functions for hyperparameter tuning (among many more functionalities). Its use in combination with Random Forest is demonstrated in [Chapter 11 of AGDS book](https://geco-bern.github.io/agds_book/randomforest.html). Reducing the number of predictors_all and retaining only the most important ones is important for obtaining robust model generalisability and is approached by what is shown below.
+
+## Variable importance
+
+Our model has 91 variables, but we don't know anything about their role in influencing the model predictions and how important they are for achieving good predictions. `ranger()` provides a built-in functionality for quantifying  variable importance based on the OOB-error. This functionality can be controlled with the argument `importance`. When set to `'permutation'`, the algorithm randomly permutes values of each variable, one at a time, and measures the importance as the resulting decrease in the OOB prediction skill of each decision tree within the Random Forest and returns the average across importances of all decision trees. Note that this is a model-specific variable importance quantification method. In [AGDS Book Chapter 12](https://geco-bern.github.io/agds_book/interpretable-ml.html#variable-importance), you have learned about a model model-agnostic method.
+
+The model object returned by the `ranger()` function stores the variable importance information. The code below accesses this information and sorts the predictor variables with decreasing importance. If the code runs slow, you can also use the faster `impurity` method (see more information [here](https://bmcbioinformatics.biomedcentral.com/counter/pdf/10.1186/s12859-016-0995-8.pdf)).
+
+```{r fig.height=18}
+# Let's run the basic model again but with recording the variable importance
+rf_basic <- ranger(
+  y = df_train[, target],     # target variable
+  x = df_train[, predictors_all], # Predictor variables
+  importance = "permutation", # Pick permutation to calculate variable importance
+  seed = 42, # Specify seed for randomization to reproduce the same model again
+  num.threads = parallel::detectCores() - 1
+) # Use all but one CPU core for quick model training
+
+# Extract the variable importance and create a long tibble
+vi_rf_basic <- rf_basic$variable.importance |>
+  bind_rows() |>
+  pivot_longer(cols = everything(), names_to = "variable")
+
+# Plot variable importance, ordered by decreasing value
+gg <- vi_rf_basic |>
+  ggplot(aes(x = reorder(variable, value), y = value)) +
+  geom_bar(stat = "identity", fill = "grey50", width = 0.75) +
+  labs(
+    y = "Change in OOB MSE after permutation",
+    x = "",
+    title = "Variable importance based on OOB"
+  ) +
+  theme_classic() +
+  coord_flip()
+
+# Display plot
+gg
+```
+
+What do we see here? The higher the value, the stronger the effect of permutation on the model performance, the more important the variable. The five most important variables are the following:
+
+| Importance rank  | Variable name      | Description                                             |
+|------------------|--------------------|---------------------------------------------------------|
+| 1                | mt_rr_y            | Mean annual precipitation                               |
+| 2                | mt_tt_y            | Mean annual temperature                                 |
+| 3                | mt_td_y            | Mean annual dew point temperature                       |
+| 4                | mt_gh_y            | Mean annual incoming radiation                          |
+| 5                | be_gwn25_vdist     | Horizontal distance to water body at 25m resolution     |
+
+We find that the mean annual precipitation is by far the most important variable in determining soil pH in our model. From a soil-forming perspective, this seems plausible [@dawson77]. We further find that the four most important variables all describe climate - reflecting its important role as a soil-forming factor. Most of the remaining variables are metrics of the topography. It should also be noted that many of them may be correlated since. Some of them measure the same aspect of topography, but derived from a digital elevation model given at different spatial resolution (see @sec-variables). Due to their potential correlation, dropping one of the affected variables from the model may thus not lead to a strong deterioration of the model skill as its (correlated) information is still contained in the remaining variables. 
+
+## Variable selection
+
+The large number of variables in our model and the tendency that many of them exhibit a low importance in comparison to the dominating few, and that they may be correlated calls for a *variable selection*. Reducing the number of predictors_all reduces the risk that remaining predictors_all are correlated. Having correlated predictors_all is a problem - as shown in the context of spatial upscaling by [@ludwig23]. Intuitively, this makes sense in view of the fact that if $x_i$ and $x_j$ are correlated, then, for example, $x_i$ is used for modelling its true association with the target variable, while $x_j$ can be "spent" to model randomly occurring covariations with the target - potentially modelling noise in the data. If this happens, overfitting will follow (see [here](https://geco-bern.github.io/agds_book/supervised_ml_I.html#overfitting)). 
+
+Different strategies for reducing the number of predictors_all, while retaining model performance and improving model generalisability, exist. *Greedy search*, or *stepwise regression* are often used. Their approach is to sequentially add (stepwise *forward*) or remove (stepwise *backward*) predictors_all and to determine the best (complemented or reduced) set of predictors_all in terms of respective model performance at each step. The algorithm stops once the model starts to deteriorate or stops improving. However, it should be noted that these algorithms don't assess all possible combinations of predictors_all and may thus not find the "globally" optimal model. A stepwise regression was implemented in AGDS I as a Report Exercise (see [here](https://geco-bern.github.io/agds_book/regression_classification.html#report-exercise)). 
+
+::: callout-tip
+To dig deeper into understanding how the model works, we could further investigate its partial dependence plots (see [here](https://geco-bern.github.io/agds_book/interpretable-ml.html#partial-dependence-plots)).
+:::
+
+An alternative approach to model selection is to consider the variable importance. predictors_all may be selected based on whether removing their association with the target variable (by permuting values of the predictor) deteriorates the model. Additionally, a decision criterion can be introduced for determining whether or not to retain the respective variable. This is implemented by the "Boruta-Algorithm" - an effective and popular approach to variable selection [@kursa10]. Boruta is available as an R package {Boruta}, is based on Random Forests, and performs a permutation of variables for determining their importance - as described in [Chapter 12 of AGDS Book](https://geco-bern.github.io/agds_book/interpretable-ml.html#variable-importance) for model-agnostic variable importance estimation. The algorithm finally categorizes variables into `"Rejected"`, `"Tentative"`, and `"Confirmed"`. Let's apply Boruta on our data.
+
+```{r fig.height=18}
+set.seed(42)
+
+# run the algorithm
+bor <- Boruta::Boruta(
+  y = df_train[, target],
+  x = df_train[, predictors_all],
+  maxRuns = 50, # Number of iterations. Set to 30 or lower if it takes too long
+  num.threads = parallel::detectCores() - 1
+)
+
+# obtain results: a data frame with all variables, ordered by their importance
+df_bor <- Boruta::attStats(bor) |>
+  tibble::rownames_to_column() |>
+  arrange(desc(meanImp))
+
+# plot the importance result
+ggplot(
+  aes(
+    x = reorder(rowname, meanImp),
+    y = meanImp,
+    fill = decision
+  ),
+  data = df_bor
+) +
+  geom_bar(stat = "identity", width = 0.75) +
+  scale_fill_manual(values = c("grey30", "tomato", "grey70")) +
+  labs(
+    y = "Variable importance",
+    x = "",
+    title = "Variable importance based on Boruta"
+  ) +
+  theme_classic() +
+  coord_flip()
+```
+
+::: callout-tip
+Determine the length $N$ of the vector of predictors_all deemed important by (`"Confirmed"`) Boruta and compare these "important" variables with the $N$ most important variables of the OOB-based variable importance estimation demonstrated above.
+:::
+
+<!-- ```{r} -->
+<!-- # Check whether the most important variables from Boruta-Algorithm are similar as the -->
+<!-- # important variables from the weighted Random Forest model -->
+<!-- bor_top10 <- Boruta::attStats(bor) |>  -->
+<!--   tibble::rownames_to_column() |>  -->
+<!--   arrange(desc(meanImp)) |>  -->
+<!--   slice_head(n = 10) |>  -->
+<!--   pull(rowname) -->
+
+<!-- vi_top10 <- vi_rf_basic |> -->
+<!--   arrange(desc(value)) |>  -->
+<!--   slice_head(n = 10) |>  -->
+<!--   pull(variable) -->
+
+<!-- cbind(vi_top10, bor_top10) |>  -->
+<!--   knitr::kable(col.names = c("RF Top 10", "Boruta Top 10")) -->
+<!-- ``` -->
+
+For the spatial upscaling in the context of digital soil mapping, let's retain only the variables deemed important (`"Confirmed"`) by the Boruta algorithm and retrain a final Random Forest model. The number of retained variables is 33.
+
+```{r}
+# get retained important variables
+predictors_selected <- df_bor |>
+  filter(decision == "Confirmed") |>
+  pull(rowname)
+
+length(predictors_selected)
+
+# re-train Random Forest model
+rf_bor <- ranger(
+  y = df_train[, target], # target variable
+  x = df_train[, predictors_selected], # Predictor variables
+  seed = 42, # Specify the seed for randomization to reproduce the same model again
+  num.threads = parallel::detectCores() - 1
+) # Use all but one CPU core for quick model training
+
+# quick report and performance of trained model object
+rf_bor
+```
+
+::: callout-tip
+Compare the skill of the models with all predictors_all and with the Boruta-informed reduced set of predictors_all. What is happening?
+:::
+
+Save the model object with the reduced set of predictors_all, calibration, and validation data for the subsequent Chapter.
+
+```{r}
+# Save relevant data for model testing in the next chapter.
+saveRDS(
+  rf_bor,
+  here("data/rf_for_ph0-10.rds")
+)
+
+saveRDS(
+  df_train[, c(target, predictors_selected)],
+  here("data/cal_for_ph0-10.rds")
+)
+
+saveRDS(
+  df_test[, c(target, predictors_selected)],
+  here("data/val_for_ph0-10.rds")
+)
+```

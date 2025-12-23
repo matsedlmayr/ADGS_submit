@@ -1,0 +1,1 @@
+Contains data that serves as inputs to scripts in `analysis/`.

@@ -1,0 +1,59 @@
+# Report Exercise {#sec-exercise}
+
+This tutorial demonstrated digital soil mapping for a continuous variable - top soil pH. The observational data from file `data-raw/soildata/berne_soil_sampling_locations.csv` contains also categorical variables. Variables `waterlog.*` provide information about whether the soil was waterlogged at different depths (30, 50, and 100 cm). It is either `TRUE` (encoded in the model as `1`) or `FALSE`.
+
+## Simple model
+
+Re-implement the digital soil mapping workflow, using Random Forest, as demonstrated in this tutorial, but for the binary categorical variable `waterlog.100`. Here are a few hints as a guide:
+
+- Make sure that the categorical target variable is encoded as a factor using the function `factor()`.
+- Start with a model that includes all predictors, trained on the pre-defined training subset.
+- Evaluate the model on the testing subset of the data. Consider appropriate metrics as described in [AGDS Book 9.4.1.2](https://geco-bern.github.io/agds_book/regression_classification.html#metrics-for-classification). Is the data balanced in terms of observed `TRUE` and `FALSE` values? What does this imply for the interpretation of the different metrics?
+
+## Variable selection
+
+- Reduce the predictor set as demonstrated in this tutorial.
+- Repeat the model evaluation and compare the model performance on the test set with what was obtained with the model using all available covariates. Which model generalises better to unseen data? 
+- Would the same model choice be made if we considered the OOB prediction error reported as part of the trained model object?
+
+## Model optimization
+
+In [AGDS Book Chapter 11](https://geco-bern.github.io/agds_book/randomforest.html#out-of-bag-prediction), you learned how to optimize hyperparameters using cross-validation. Using the training data subset, implement a 5-fold cross-validation to optimise the hyperparameters `mtry` and `min.node.size` of the same Random Forest model as implemented above. You may use the {caret} library as demonstrated in [AGDS Book](https://geco-bern.github.io/agds). Evaluate the optimized model on the test set using the same metrics as considered above. Does the model generalise better to unseen data than the initial model (which used default hyperparameters, see `?ranger::ranger`).
+
+## Probabilistic predictions
+
+Using the optimised (or if you didn't manage - the initial default) hyperparameters, train the Random Forest model, setting `ranger::ranger(..., probability = TRUE)`. This yields not a model predicting a binary class, but a *probability* of the target to be `TRUE`. This lets the user chose where to put the threshold for translating a probability to a binary class. E.g., if the predicted probability is $>0.5$, then consider this as a prediction of `TRUE`. Establish the Reicever-operating-characteristic curve, as described in [AGDS Book Chapter 9.4.1.2](https://geco-bern.github.io/agds_book/regression_classification.html#metrics-for-classification). 
+
+Consider you inform an infrastructure construction project where waterlogged soils severely jeopardize the stability of the building. Then, consider you inform a project where waterlogged soils are unwanted, but not critical. In both cases, your prediction map of a binary classification is used as a basis and the binary classification is derived from the probabilistic prediction. How would you chose the threshold in each case? Would you chose the same threshold in both cases? If not, explain why. Can you think of an analogy of a similarly-natured problem in another realm?
+
+
+
+<!-- After reading through this tutorial, you should have a solid understanding of how you can use Random Forest models for digital soil mapping. Based on the provided knowledge and code, it is now your task to improve and expand the analysis. As stated in Chapter @sec-dataprep, the model created in the tutorial picked random covariates for model building. This is of course nonsensical and should be your first step to improve the model. Find a way to create a workflow that filters for the most relevant predictors (do not pick random variables, and do not just add all variables to your final model - do you udnerstand why the latter makes no sense?...). What number of variables do you find to be suitable for your final model? -->
+
+<!-- In the [AGDS Book](https://geco-bern.github.io/agds_book/), we explain how to conduct hyperparameter tuning and cross-validation of RandomForests via the {caret} package. Read up on how to do this and implement your own routine to predict the top layer pH! Moreover, we explain how to use model-agnostic procedures to interpret your model in the [AGDS Book](https://geco-bern.github.io/agds_book/). Conduct these tests on your model and interpret your findings. -->
+
+<!-- Finally, you should test your model as demonstrated in the tutorial. Give explanations for how and why your model performs differently than the one in this tutorial. Note that this exercise thrives on your curiosity to code! So, if you want to go further, you could also investigate the prediction of other soil properties, or test and compare other machine learning methods. -->
+
+<!--# ## Additional Exercises -->
+
+<!--# ### Spatial Upscaling -->
+
+<!--# In @sec-intro and @sec-dataprep, we touched on the topic of spatial auto-correlation. Re-read these sections and solve the problem below. -->
+
+<!--# In the top half of Figure @fig-chessboard, there is a predicted land cover map based on a Random Forest model. The green circles are sampling locations where the land cover was classified by hand as for model training. The different colors denote different the covers. Comparing the prediction to the satellite image used for prediction, we see that, for example, agricultural land is in light green and urban structures are in red. -->
+
+<!--# Now, we see that there is a lot of miss-classification happening here, and we see this chess-board pattern in the prediction map. Why is this happening? Find two causes of how the underlying data can lead to such miss-classification. -->
+
+<!--# ```{=html} -->
+
+<!--# <!--# Solution: -->
+
+<!--# 1. Bad sampling scheme with not-evenly spread locations. Sampling scheme leads to spatially clustered training data. Model just predicts what is nearby and does not learn the information from the picture. -->
+
+<!--# 2. Not using rotated coordinates as predictors leads to chess-board features. Model learned that there is dark forest to the east, light forest to the south, etc. -->
+
+<!--# -->
+
+<!--# ``` -->
+
+<!--# ![Example for chess-board structured prediction map, taken from a GIS stackexchange [post](https://gis.stackexchange.com/questions/111932/classified-images-of-randomforest-classification-look-clustered).](images/chess_board_example.png){#fig-chessboard fig-align="center"} -->
