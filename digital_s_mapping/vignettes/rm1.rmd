@@ -108,24 +108,18 @@ The mosaic plots illustrate the confusion matrices of the full Random Forest mod
 ```{r}
 ```
 # 5.3 Hyperparameter Tuning\
-A Random Forest model was trained using the caret package, with Ranger as the underlying engine. Hyperparameters (mtry and min.node.size) were tuned via 5-fold cross-validation to optimise the ROC metric. Accuracy alone can be misleading: predicting all “No” would give high accuracy but poor detection of waterlogged sites.The final model used mtry = 2 and min.node.size = 3. Cross-validation results indicated a high ROC value of 0.8677, demonstrating the model's potential to distinguish between waterlogged and non-waterlogged areas.\
-```markdown
-The tuned Random Forest achieved optimal performance using
-`r best_tune$mtry` predictors at each split and a minimum node size of `r best_tune$min.node.size`.
+A Random Forest model was trained using the caret package, with Ranger as the underlying engine. Hyperparameters (mtry and min.node.size) were tuned via 5-fold cross-validation to optimise the ROC metric. Accuracy alone can be misleading: predicting all “No” would give high accuracy but poor detection of waterlogged sites. The final model used mtry = 2 and min.node.size = 1. Cross-validation results indicated a high ROC value, demonstrating the model's potential to distinguish between waterlogged and non-waterlogged areas.\
+
 ```{r}
 knitr::include_graphics(here("fig/rf_bor_tuned_plot.png"))
 ```
 
 ```{r cv-table}
-cv_results |>
-dplyr::select(mtry, min.node.size, ROC) |>
-dplyr::arrange(desc(ROC)) |>
-head(5)
 bind_rows(metrics_full, metrics_bor, metrics_tuned) |>
   knitr::kable(digits = 3)
 knitr::include_graphics(here("fig/mosaic_tuned_rf.png"))
 ```
-When we compare the three models on the test set, we see that the Boruta-reduced Random Forest model achieves the best performance across nearly all metrics, including accuracy (0.795), balanced accuracy (0.780), precision, recall and the F1 score. Despite being optimised for hyperparameters, the tuned Random Forest performs slightly worse than the Boruta-reduced model, with lower accuracy (0.780) and balanced accuracy (0.762), as well as slightly reduced precision and recall.\ This suggests that, in this instance, hyperparameter tuning does not improve generalisation any further, and that the Boruta-reduced model is the most reliable option for predicting waterlogged soils at a depth of 100 cm.\
+When we compare the three models on the test set, we see that the Boruta-reduced Random Forest model achieves the best performance across nearly all metrics, including accuracy (0.795), balanced accuracy (0.780), precision, recall and the F1 score. Despite being optimised for hyperparameters, the tuned Random Forest performs slightly worse than the Boruta-reduced model, with lower accuracy (0.790) and balanced accuracy (0.776), as well as slightly reduced precision and recall.\ This suggests that, in this instance, hyperparameter tuning does not improve generalisation any further, and that the Boruta-reduced model is the most reliable option for predicting waterlogged soils at a depth of 100 cm since it already exhibits a really high fit.\
 Here, the target variable 'waterlog.100' was converted to a factor with the levels 'No' and 'Yes' to ensure compatibility with the 'caret' and 'ranger' frameworks. Only the predictors selected by the Boruta algorithm were retained for modelling purposes. This reduces noise from irrelevant variables and ensures that the model focuses on features that are informative for predicting waterlogged soils. The Boruta-reduced datasets (df_train_bor and df_test_bor) were used for training and testing purposes.
 ```{r}
 

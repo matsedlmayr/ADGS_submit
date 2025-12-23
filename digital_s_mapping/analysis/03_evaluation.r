@@ -145,7 +145,7 @@ df_test$pred <- prediction$predictions
 #######
 # --- Full RF model ---
 results_full <- evaluate_rf_model(
-  model = rf_full,
+  model = rf_basic,
   df_test = df_test_full,
   pred_col = "pred",
   model_name = "full_rf",

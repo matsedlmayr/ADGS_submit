@@ -220,7 +220,7 @@ rf_bor_tuned <- caret::train(
   ),
   tuneGrid = expand.grid(
     mtry = c(2, 4, 6, 8, 10),        # adjust range depending how many predictors
-    min.node.size = c(1, 3, 5, 10),  # assignment requires tuning this
+    min.node.size = c(1, 3, 5, 8, 10),  # assignment requires tuning this
     splitrule = "gini"
   ),
   num.trees = 500,
