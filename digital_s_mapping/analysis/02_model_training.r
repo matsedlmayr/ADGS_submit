@@ -5,6 +5,7 @@ library(dplyr)
 library(tidyr)
 library(here)
 library(readr)
+library(knitr)
 df_full <- readRDS(url(
   "https://raw.githubusercontent.com/geco-bern/tutorial_digital_soil_mapping/refs/heads/main/data/df_full.rds",
   "rb"  # read in binary mode

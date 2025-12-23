@@ -12,7 +12,7 @@ library(terra)
 library(tidyterra)
 library(ggplot2)
 library(readr)
-
+library(knitr)
 # 1. Train models
 message("Running model training...")
 source(here::here("analysis/02_model_training.R"))
