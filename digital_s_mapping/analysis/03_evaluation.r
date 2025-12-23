@@ -286,7 +286,7 @@ dev.off()
 # --- Predictions on raster ---
 
 # --- Select covariates used in Boruta RF ---
-preds_selected <- rf_prob$forest$independent.variable.names
+preds_selected <- rf_bor$forest$independent.variable.names
 files_selected <- files_covariates[apply(sapply(preds_selected, grepl, files_covariates), 1, any)]
 raster_covariates <- terra::rast(files_selected)
 
@@ -301,7 +301,7 @@ df_predict$prediction <- prediction$predictions
 
 # Make predictions using the RF model
 prediction_prob <- predict(
-  rf_prob,              # RF model
+  rf_bor,              # RF model
   data = df_predict,   
   num.threads = parallel::detectCores() - 1)
 # Get factor levels of target
@@ -347,7 +347,7 @@ ggsave(
   filename = here::here("fig/map_prob_tuned_rf.png"),
   plot = p_map,
   width = 7,
-  height = 9,   # vertical size as you wanted
+  height = 9,  
   dpi = 300
 )
 map_summary <- list(

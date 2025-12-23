@@ -1,0 +1,36 @@
+Random Forest 
+
+605 samples
+ 40 predictor
+  2 classes: 'No', 'Yes' 
+
+No pre-processing
+Resampling: Cross-Validated (5 fold) 
+Summary of sample sizes: 483, 484, 485, 483, 485 
+Resampling results across tuning parameters:
+
+  mtry  min.node.size  ROC        Sens       Spec     
+   2     1             0.8676531  0.8212833  0.7412245
+   2     3             0.8676772  0.8268388  0.7369796
+   2     5             0.8637524  0.8240610  0.7330612
+   2    10             0.8670422  0.8240610  0.7411429
+   4     1             0.8648668  0.8157668  0.7288980
+   4     3             0.8627520  0.8157277  0.7329796
+   4     5             0.8663829  0.8129499  0.7370612
+   4    10             0.8637136  0.8212833  0.7371429
+   6     1             0.8647685  0.8213615  0.7289796
+   6     3             0.8626765  0.8101721  0.7248163
+   6     5             0.8627304  0.8186228  0.7370612
+   6    10             0.8641578  0.8269562  0.7452245
+   8     1             0.8627538  0.8103286  0.7248980
+   8     3             0.8616230  0.8269562  0.7249796
+   8     5             0.8609072  0.8158059  0.7369796
+   8    10             0.8631277  0.8102113  0.7370612
+  10     1             0.8608672  0.8269562  0.7088163
+  10     3             0.8622242  0.8214006  0.7289796
+  10     5             0.8644892  0.8158059  0.7328980
+  10    10             0.8603951  0.8130282  0.7369796
+
+Tuning parameter 'splitrule' was held constant at a value of gini
+ROC was used to select the optimal model using the largest value.
+The final values used for the model were mtry = 2, splitrule = gini and min.node.size = 3.

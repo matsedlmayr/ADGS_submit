@@ -1,0 +1,174 @@
+---
+title: "Soil Waterlogging"
+author: "Matthias Sedlmayr"
+date: "`21.12.2025`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    fig_width: 8
+    fig_height: 6
+---
+All figures and data presented in the vignette are generated from the scripts in the analysis/ folder.
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(cache = TRUE)
+library(here)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(ranger)
+library(Boruta)
+library(caret)
+library(terra)
+library(tidyterra)
+library(pROC)
+```
+This document demonstrates how to use Random Forest for digital soil mapping to predict waterlogging at a depth of 100 cm (`waterlog.100`). The workflow involves model training, variable selection, hyperparameter tuning and probabilistic predictions.\
+
+I will implement Random Forest models and try to predict if soil is waterlogged at 100cm depth with the variable waterlog.100. It is binary encoded as 1/0 and was converted into a factor.
+
+### Load results
+
+```{r load}
+library(dplyr)
+library(here)
+df_full <- readRDS(url(
+  "https://raw.githubusercontent.com/geco-bern/tutorial_digital_soil_mapping/refs/heads/main/data/df_full.rds",
+  "rb"  # read in binary mode
+))
+model_summary <- readRDS(here("data/model_summary_rf.rds"))
+best_tune <- readRDS(here("data/rf_best_tune.rds"))
+cv_results <- readRDS(here("data/rf_cv_results.rds"))
+
+df_bor <- readRDS(here("data/boruta_importance.rds"))
+predictors_selected <- readRDS(here("data/boruta_selected_vars.rds"))
+
+metrics_full <- readRDS(here("data/metrics_full_rf.rds"))
+metrics_bor <- readRDS(here("data/metrics_boruta_rf.rds"))
+metrics_tuned <- readRDS(here("data/metrics_tuned_rf.rds"))
+
+rf_basic <- readRDS(here("data/rf_for_waterlog100_full.rds"))
+rf_bor <- readRDS(here("data/rf_for_waterlog100.rds"))
+```
+# 5.1 Simple model
+
+The waterlog.100 classes observed are imbalanced, with fewer waterlogged observations than non-waterlogged ones. Consequently, overall accuracy alone is insufficient for evaluating model performance, since a model that predicts the majority class could still achieve a high accuracy score. Therefore, sensitivity, specificity, balanced accuracy and ROC-AUC provide a more informative evaluation of model performance.
+```{r}
+table(df_full$waterlog.100)
+prop.table(table(df_full$waterlog.100))
+```
+# 5.2 Variable selection
+Models are trained in the file analysis/02_train_random_forest.r\ 
+Here only the results are shown.
+```{r fig-rf-oob, echo=FALSE, fig.cap="Permutation-based variable importance of the full Random Forest model."}
+knitr::include_graphics(here::here("fig/rf_oob_importance.png"))
+```
+The following displays the importance of each variable of the Boruta model. The colors show whether the variable was accepted, indefinite or rejected.
+```{r fig-boruta, echo=FALSE, fig.cap="Boruta variable importance showing confirmed, tentative, and rejected predictors."}
+knitr::include_graphics(here::here("fig/boruta_importance.png"))
+```
+
+
+```markdown
+Boruta feature selection reduced the number of predictors from
+`r model_summary$n_predictors_all` to `r model_summary$n_predictors_boruta`.
+```
+### Model comparison table
+
+```{r eval-table}
+bind_rows(metrics_full, metrics_bor) |>
+  knitr::kable(digits = 3)
+
+oob_errors <- tibble::tibble(
+  Model = c("Full RF", "Boruta RF"),
+  OOB_Error = c(
+    rf_basic$prediction.error,
+    rf_bor$prediction.error
+  )
+)
+
+knitr::kable(oob_errors, digits = 3)
+```
+In my case, the full Random Forest model had an out-of-bag (OOB) error of 0.213, whereas the Boruta-reduced model had a slightly lower OOB error of 0.203.
+When evaluated on an independent test set, the Boruta-reduced model outperformed the full model across multiple metrics, including accuracy (0.795 vs 0.765), precision (0.699 vs 0.658), recall (0.729 vs 0.686), F1 score (0.713 vs 0.671) and balanced accuracy (0.780 vs 0.747). This demonstrates that the Boruta model generalises slightly better to unseen data. While OOB error can provide a useful initial estimate of performance, it is not always perfectly reliable as it is an internal measure that can be influenced by correlations among predictors or unpredictable observations.\
+In this case, however, both OOB error and independent test-set metrics consistently indicate that the Boruta-reduced model is the better choice, so the same model choice would have been made if I only considered the OOB prediction error.\
+
+
+### Confusion Matrix\
+
+```{r}
+knitr::include_graphics(here::here("fig/mosaic_full_rf.png"))
+knitr::include_graphics(here::here("fig/mosaic_boruta_rf.png"))
+```
+```{r}
+
+```
+The mosaic plots illustrate the confusion matrices of the full Random Forest model and the Boruta-reduced model. While both models correctly classify the 0-0 and 1-1 as most dominant, but the Boruta model performs slightly better. 
+```{r}
+```
+# 5.3 Hyperparameter Tuning\
+A Random Forest model was trained using the caret package, with Ranger as the underlying engine. Hyperparameters (mtry and min.node.size) were tuned via 5-fold cross-validation to optimise the ROC metric. Accuracy alone can be misleading: predicting all “No” would give high accuracy but poor detection of waterlogged sites.The final model used mtry = 2 and min.node.size = 3. Cross-validation results indicated a high ROC value of 0.8677, demonstrating the model's potential to distinguish between waterlogged and non-waterlogged areas.\
+```markdown
+The tuned Random Forest achieved optimal performance using
+`r best_tune$mtry` predictors at each split and a minimum node size of `r best_tune$min.node.size`.
+```{r}
+knitr::include_graphics(here("fig/rf_bor_tuned_plot.png"))
+```
+
+```{r cv-table}
+cv_results |>
+dplyr::select(mtry, min.node.size, ROC) |>
+dplyr::arrange(desc(ROC)) |>
+head(5)
+bind_rows(metrics_full, metrics_bor, metrics_tuned) |>
+  knitr::kable(digits = 3)
+knitr::include_graphics(here("fig/mosaic_tuned_rf.png"))
+```
+When we compare the three models on the test set, we see that the Boruta-reduced Random Forest model achieves the best performance across nearly all metrics, including accuracy (0.795), balanced accuracy (0.780), precision, recall and the F1 score. Despite being optimised for hyperparameters, the tuned Random Forest performs slightly worse than the Boruta-reduced model, with lower accuracy (0.780) and balanced accuracy (0.762), as well as slightly reduced precision and recall.\ This suggests that, in this instance, hyperparameter tuning does not improve generalisation any further, and that the Boruta-reduced model is the most reliable option for predicting waterlogged soils at a depth of 100 cm.\
+Here, the target variable 'waterlog.100' was converted to a factor with the levels 'No' and 'Yes' to ensure compatibility with the 'caret' and 'ranger' frameworks. Only the predictors selected by the Boruta algorithm were retained for modelling purposes. This reduces noise from irrelevant variables and ensures that the model focuses on features that are informative for predicting waterlogged soils. The Boruta-reduced datasets (df_train_bor and df_test_bor) were used for training and testing purposes.
+```{r}
+
+```
+# 5.4 Probabilistic Predictions
+I chose the threshold for converting predicted probabilities into binary classifications by analysing the ROC curve. This allowed me to adjust the balance between sensitivity and specificity depending on the scenario. For critical infrastructure, where overlooking a waterlogged site could have serious consequences, a lower threshold (0.3) was selected to maximise sensitivity. Conversely, for non-critical infrastructure, where false alarms are more costly, a higher threshold (0.7) was chosen to maximise specificity. Predicted probabilities of waterlogging at 100 cm were generated for validation points. 
+
+
+```{r load-prob-results}
+auc_prob <- readRDS(here::here("data/eval_prob_auc.rds"))
+threshold_results <- readRDS(here::here("data/eval_prob_thresholds.rds"))
+```
+```{r prob-auc-table}
+knitr::kable(
+  auc_prob,
+  digits = 3,
+  caption = "AUC of the probabilistic Random Forest model."
+)
+```
+- **Critical infrastructure**: Lowering the threshold increased **sensitivity** to 0.81 (most waterlogged sites detected) but reduced **specificity** to 0.65.\  
+- **Non-critical infrastructure**: Raising the threshold decreased **sensitivity** to 0.34 but increased **specificity** to 0.94.  \
+
+```{r fig-roc, echo=FALSE, fig.height=6, fig.cap="ROC curve of the probabilistic Random Forest model."}
+knitr::include_graphics(here::here("fig/rf_prob_roc.png"))
+```
+
+The model was evaluated separately for the two scenarios using the chosen thresholds. In the critical infrastructure scenario, sensitivity increased to 0.81 while specificity decreased to 0.65, indicating a deliberate bias towards identifying waterlogged sites. In the non-critical infrastructure scenario, sensitivity decreased to 0.34, but specificity increased to 0.94, demonstrating the model's capacity to minimise false positives even if some waterlogged sites are overlooked. These results demonstrate that selecting different thresholds can be used to tailor model outputs according to the consequences of misclassification.
+
+```{r fig-map-prob, echo=FALSE, fig.cap="Predicted probability of waterlogging (0–100 cm) using the tuned Random Forest model."}
+knitr::include_graphics(here::here("fig/map_prob_tuned_rf.png"))
+```
+
+```{r map-summary}
+map_summary <- readRDS(here("data/map_summary_tuned_rf.rds"))
+
+data.frame(
+  Minimum = map_summary$min_prob,
+  Mean    = map_summary$mean_prob,
+  Maximum = map_summary$max_prob
+) |> knitr::kable(digits = 3)
+```
+The figure shows the predicted probability of waterlogging at a depth of 100 cm across the study area, as estimated by the Boruta-reduced Random Forest model. Each pixel represents the model's estimate of the likelihood of waterlogging in that area, ranging from 0 (very unlikely) to 1 (very likely).  \
+
+The map highlights spatial patterns in soil waterlogging and shows that some regions have higher probabilities, which are likely influenced by underlying environmental factors such as soil type, topography and hydrology.  \
+
+In practice, this map provides a spatially explicit risk assessment, guiding decision-making in construction planning or land management by identifying areas more likely to be waterlogged.

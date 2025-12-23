@@ -48,5 +48,4 @@ This project implements a spatial upscaling workflow to model global leaf nitrog
 ## References
 
 - Ludwig, M. et al., 2023. Assessing and improving the transferability of current global spatial prediction models. *Global Ecology and Biogeography*, 32, 356–368.  
-- Tian, D. et al., 2019. A global database of paired leaf nitrogen and phosphorus concentrations of terrestrial plants. *Ecology*, 100(9), e02812.  
 - Stocker, B., 2023. Spatial Upscaling. GECO, University of Bern. [Online](https://geco-bern.github.io/spatial_upscaling/)
