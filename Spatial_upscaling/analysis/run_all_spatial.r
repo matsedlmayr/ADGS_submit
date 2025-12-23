@@ -10,7 +10,7 @@ source(here::here("analysis/01_loaddata.R"))
 
 # 2. Run models / cross-validation
 message("Running 02_runcv_model.R...")
-source(here::here("analysis/02_runcv_model.R"))
+source(here::here("analysis/02_runcv_models.R"))
 
 # 3. Comparison / evaluation
 message("Running 03_comparison1.R...")

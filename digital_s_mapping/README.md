@@ -15,7 +15,8 @@ This repository contains the code and data for reproducing the Random Forest ana
     Loads data from [GitHub](https://raw.githubusercontent.com/geco-bern/tutorial_digital_soil_mapping/refs/heads/main/data/df_full.rds).  
     *Note:* This could also be replaced by a dataset prepared using `02-data_preparation.R` from the tutorial.  
   - `03_evaluation.R` – Evaluates model performance using confusion matrices, ROC curves, AUC, and probabilistic predictions. Uses the `evaluate_rf_model` function from `R/`.
-
+  - `run_all_digital.R` - Main file to be executed
+  
 - `R/`  
   Contains helper functions:
   - `evaluate_rf_model.R` – Function to evaluate model performance (confusion matrices, ROC, probabilistic predictions).
@@ -34,9 +35,9 @@ This repository contains the code and data for reproducing the Random Forest ana
 ## How to reproduce
 
 1. Make sure all required R packages are installed.
-2. Run the scripts in `analysis/` in order:  
+2. Run the Main file`run_all_digital.R` in `analysis/` in which calls:  
    1. `02_model_training.R` – trains models and saves outputs to `data/`  
-   2. `03_evaluation.R` – generates performance metrics and plots  
+   2. `03_evaluation.R` – generates performance metrics and plots and uses the function file `evaluate_rf_model.R` in the folder `R`
 3. Use `vignettes/re1.Rmd` to see interpretations, visualizations, and the report write-up.
 
 ---
