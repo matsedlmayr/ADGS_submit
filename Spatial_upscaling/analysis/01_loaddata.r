@@ -1,9 +1,9 @@
 # prepare_data.R
 library(tidyverse)
 library(skimr)
-
+library(here)
 # Load data
-df <- readr::read_csv("https://raw.githubusercontent.com/geco-bern/leafnp_data/main/data/leafnp_tian_et_al.csv")
+df <- readr::read_csv((here::here("https://raw.githubusercontent.com/geco-bern/leafnp_data/main/data/leafnp_tian_et_al.csv")))
 
 # Keep the 50 most common species
 common_species <- df %>%
@@ -37,7 +37,7 @@ save(
   dfs,
   predictors,
   target,
-  file = "data/leafN_prepared_data.RData"
+  file = (here::here("data/leafN_prepared_data.RData"))
 )
 # Quick data summary
 skimr::skim(dfs)
