@@ -33,13 +33,14 @@ This repository contains the code and data for reproducing the Random Forest ana
 ---
 
 ## How to reproduce
-
+0. If only interested in results step forward to step 4.
 1. Open digital_s_mapping/digital_soil_mapping.Rproj to open the project
 2. Make sure all required R packages are installed.
 3. Run the Main file`run_all_digital.R` in `analysis/` which calls:  
    1. `02_model_training.R` – trains models and saves outputs to `data/`  
    2. `03_evaluation.R` – generates performance metrics and plots and uses the function file `evaluate_rf_model.R` in the folder `R`
 4. Use `vignettes/re1.Rmd` to see interpretations, visualizations, and the report write-up.
+  *Note:* This is also possible without running the analysis files, as the figures and plots have already been downloaded.
 
 ---
 
