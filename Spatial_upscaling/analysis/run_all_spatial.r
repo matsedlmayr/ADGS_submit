@@ -10,6 +10,7 @@ library(sf)
 library(rnaturalearth)
 library(rnaturalearthdata)
 library(here)
+library(skimr)
 # 1. Load the data
 message("Running 01_loaddata.R...")
 source(here::here("analysis/01_loaddata.R"))
