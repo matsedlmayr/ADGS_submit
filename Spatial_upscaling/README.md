@@ -37,7 +37,7 @@ This project implements a spatial upscaling workflow to model global leaf nitrog
 
 ## Workflow
 0. To only look at the results it is possible to jump to step 3. directly
-1. Open `digital_s_mapping/digital_soil_mapping.Rproj` to open the Project Structure.
+1. Open `Spatial_upscaling/R_book_template.Rproj` to open the Project Structure.
 2. Run `run_all_spatial.R` as a main file for the following workflow to be executed.
   1. **Data preparation**  
      Runs `analysis/01_loaddata.R` to download, clean, and select the dataset.  
