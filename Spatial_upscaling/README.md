@@ -39,13 +39,13 @@ This project implements a spatial upscaling workflow to model global leaf nitrog
 0. To only look at the results it is possible to jump to step 3. directly
 1. Open `Spatial_upscaling/R_book_template.Rproj` to open the Project Structure.
 2. Run `run_all_spatial.R` as a main file for the following workflow to be executed.
-  1. **Data preparation**  
+  - **Data preparation**  
      Runs `analysis/01_loaddata.R` to download, clean, and select the dataset.  
   
-  2. **Modeling & Cross-validation**  
+  - **Modeling & Cross-validation**  
      Runs `analysis/02_runcv_model.R` to train Random Forest models using random, spatial, and environmental CV. Outputs include metrics, figures and intermediate data files.
   
-  3. **Comparison**  
+  - **Comparison**  
      Runs `analysis/03_comparison1.R` to generate figures and tables comparing model performance across CV strategies. These outputs are used in the vignettes for interpretation.
 3. Now all figures and data files should be loaded new and the R Markdown report rm2.rmd can be knitted 
   (Note that this is already possible without running the script as the figures and data are stored already)
