@@ -6,9 +6,9 @@ library(ggplot2)
 library(sf)
 library(rnaturalearth)
 library(rnaturalearthdata)
-
+library(here)
 # Load prepared data
-load("data/leafN_prepared_data.RData")  # dfs, predictors, target
+load(here::here("data/leafN_prepared_data.RData"))  # dfs, predictors, target
 
 # -----------------------------
 # Random 5-fold CV
@@ -45,7 +45,7 @@ results_random_cv %>%
   summarise(mean_rmse = mean(rmse), mean_rsq = mean(rsq))
 
 # Save results
-saveRDS(results_random_cv, "data/results_random_cv.rds")
+saveRDS(results_random_cv, here::here("data/results_random_cv.rds"))
 
 
 # -----------------------------
@@ -76,7 +76,7 @@ plot <- ggplot() +
   theme(legend.position = "bottom")
 print(plot)
 ggsave(
-  filename = "fig/plot.png",
+  filename = here::here("fig/plot.png"),
   plot = plot,
   width = 7,
   height = 5,
@@ -98,7 +98,7 @@ p <-ggplot() +
   labs(x = "", y = "", color = "Cluster")
 print(p)
 ggsave(
-  filename = "fig/spatial.png",
+  filename = here::here("fig/spatial.png"),
   plot = p,
   width = 7,
   height = 5,
@@ -122,7 +122,7 @@ p2 <- ggplot(dfs, aes(x = cluster, y = leafN, fill = cluster)) +
   theme(legend.position = "none")
 print(p2)
 ggsave(
-  filename = "fig/spatial_cluster.png",
+  filename = here::here("fig/spatial_cluster.png"),
   plot = p2,
   width = 7,
   height = 5,
@@ -130,7 +130,7 @@ ggsave(
 )
 
 # Save results
-saveRDS(results_spatial_cv, "data/results_spatial_cv.rds")
+saveRDS(results_spatial_cv, here::here("data/results_spatial_cv.rds"))
 
 # -----------------------------
 # environmental
@@ -155,7 +155,7 @@ p3 <- ggplot(dfs, aes(x = mat, y = map, color = factor(env_cluster))) +
   theme_bw()
 print(p3)
 ggsave(
-  filename = "fig/environmental.png",
+  filename = here::here("fig/environmental.png"),
   plot = p3,
   width = 7,
   height = 5,
@@ -188,5 +188,5 @@ results_env_cv <- map2_dfr(group_folds_train, group_folds_test, train_test_env_f
   mutate(fold = 1:5)
 
 # Save results
-saveRDS(results_env_cv, "data/results_env_cv.rds")
+saveRDS(results_env_cv, here::here("data/results_env_cv.rds"))
 
